@@ -3,7 +3,6 @@ R_path = "./rotM.txt"
 T_path = "./translation_vector.txt"
 
 model_path = "models/yolov5s.onnx"
-window_name = "Frame"
 
 class_names = [
     "person",

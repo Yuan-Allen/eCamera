@@ -3,7 +3,9 @@ import numpy as np
 from openvino.runtime import Core, Layout, Type
 from openvino.preprocess import PrePostProcessor, ColorFormat
 from utils.augmentations import letterbox
-from config import model_path, window_name, class_names, colors
+from config import model_path, class_names, colors
+
+window_name = "Frame"
 
 
 def get_net(model_path):
@@ -90,14 +92,15 @@ def show_box(frame, filtered_ids, filered_confidences, filtered_boxes):
         )
         cv2.putText(
             frame,
-            class_names[class_id],
+            "{}: ({} {})".format(
+                class_names[class_id], box[0] + box[2] / 2, box[1] + box[3]
+            ),
             (box[0], box[1]),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.5,
             (0, 0, 0),
             1,
         )
-        print(class_names[class_id], box)
     return frame
 
 
@@ -124,8 +127,6 @@ if __name__ == "__main__":
         filtered_ids, filered_confidences, filtered_boxes = get_result(predictions)
 
         frame = show_box(frame, filtered_ids, filered_confidences, filtered_boxes)
-
-        print("Detections: " + str(len(filtered_ids)))
 
         cv2.imshow(window_name, frame)
         key = cv2.waitKey(1)
