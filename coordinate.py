@@ -1,3 +1,4 @@
+from unittest import result
 import numpy as np
 import cv2
 from config import intrinsic_path, R_path, T_path
@@ -8,8 +9,7 @@ r = np.loadtxt(R_path)
 t = np.asmatrix(np.loadtxt(T_path)).T
 
 
-def pixel_to_world(camera_intrinsics, r, t, img_points):
-
+def __pixel_to_world(camera_intrinsics, r, t, img_points):
     K_inv = camera_intrinsics.I
     R_inv = np.asmatrix(r).I
     R_inv_T = np.dot(R_inv, np.asmatrix(t))
@@ -33,6 +33,11 @@ def pixel_to_world(camera_intrinsics, r, t, img_points):
     return world_points
 
 
+def pixel_to_world(x, y):
+    result = __pixel_to_world(camera_intrinsic, r, t, [[x, y]])
+    return (result[0][0][0], result[0][0][1], result[0][0][2])
+
+
 def get_camera(window_name, width, height):
     cap = cv2.VideoCapture(1)
     cap.set(3, width)
@@ -43,7 +48,7 @@ def get_camera(window_name, width, height):
 
 def on_EVENT_LBUTTONDOWN(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
-        result = pixel_to_world(camera_intrinsic, r, t, [[x, y]])
+        result = __pixel_to_world(camera_intrinsic, r, t, [[x, y]])
         print(
             "({}, {}) --> ({}, {}, {}))".format(
                 x, y, result[0][0][0], result[0][0][1], result[0][0][2]

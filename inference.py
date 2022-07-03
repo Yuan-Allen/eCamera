@@ -4,6 +4,7 @@ from openvino.runtime import Core, Layout, Type
 from openvino.preprocess import PrePostProcessor, ColorFormat
 from utils.augmentations import letterbox
 from config import model_path, class_names, colors
+from coordinate import pixel_to_world
 
 window_name = "Frame"
 
@@ -90,10 +91,11 @@ def show_box(frame, filtered_ids, filered_confidences, filtered_boxes):
         cv2.rectangle(
             frame, (box[0], box[1] - 10), (box[0] + box[2], box[1]), color, -1
         )
+        world_coor = pixel_to_world(box[0] + box[2] / 2, box[1] + box[3])
         cv2.putText(
             frame,
-            "{}: ({} {})".format(
-                class_names[class_id], box[0] + box[2] / 2, box[1] + box[3]
+            "{}: ({:.2f} {:.2f} {:.2f})".format(
+                class_names[class_id], world_coor[0], world_coor[1], world_coor[2]
             ),
             (box[0], box[1]),
             cv2.FONT_HERSHEY_SIMPLEX,
