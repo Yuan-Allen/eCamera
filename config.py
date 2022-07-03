@@ -4,6 +4,9 @@ T_path = "./translation_vector.txt"
 
 model_path = "models/yolov5s.onnx"
 
+server = ("127.0.0.1", 3333)
+send_coor_flag = False
+
 class_names = [
     "person",
     "bicycle",

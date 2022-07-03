@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
+import socket
+import json
 from openvino.runtime import Core, Layout, Type
 from openvino.preprocess import PrePostProcessor, ColorFormat
 from utils.augmentations import letterbox
-from config import model_path, class_names, colors
+from config import model_path, server, send_coor_flag, class_names, colors
 from coordinate import pixel_to_world
 
 window_name = "Frame"
@@ -114,9 +116,22 @@ def get_camera(window_name, width, height):
     return cap
 
 
+def send_coor(s, filtered_ids, filtered_boxes):
+    datas = {"request type": 2, "id": 1, "type": "camera", "objects": []}
+    for (class_id, box) in zip(filtered_ids, filtered_boxes):
+        world_coor = pixel_to_world(box[0] + box[2] / 2, box[1] + box[3])
+        datas["objects"].append({class_names[class_id]: world_coor})
+    s.sendall((json.dumps(datas) + "\n").encode())
+
+
 if __name__ == "__main__":
     net = get_net(model_path)
     cap = get_camera(window_name, 1280, 720)
+
+    if send_coor_flag:
+        s = socket.socket()
+        s.connect(server)
+
     while True:
         ret, frame = cap.read()
 
@@ -127,6 +142,8 @@ if __name__ == "__main__":
         predictions = net([input_tensor])[net.outputs[0]]
 
         filtered_ids, filered_confidences, filtered_boxes = get_result(predictions)
+        if send_coor_flag:
+            send_coor(s, filtered_ids, filtered_boxes)
 
         frame = show_box(frame, filtered_ids, filered_confidences, filtered_boxes)
 
@@ -134,5 +151,8 @@ if __name__ == "__main__":
         key = cv2.waitKey(1)
         if key == 27:
             cap.release()
-            cv2.destroyAllWindows()
             break
+
+    cv2.destroyAllWindows()
+    if send_coor_flag:
+        s.close()
