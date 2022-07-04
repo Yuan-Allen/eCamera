@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
-from config import intrinsic_path, R_path, T_path
+from config import INTRINSIC_PATH, R_PATH, T_PATH
 
 object_points = []
 image_points = []
-camera_matrix = np.loadtxt(intrinsic_path)
+camera_matrix = np.loadtxt(INTRINSIC_PATH)
 dist_coeffs = np.zeros((4, 1))
 
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         np.array(object_points), np.array(image_points), camera_matrix, dist_coeffs
     )
     rotM = cv2.Rodrigues(rotation_vector)[0]
-    np.savetxt(R_path, rotM)
-    np.savetxt(T_path, translation_vector)
+    np.savetxt(R_PATH, rotM)
+    np.savetxt(T_PATH, translation_vector)
     print(rotM)
     print(translation_vector)

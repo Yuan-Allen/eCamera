@@ -1,12 +1,12 @@
 from unittest import result
 import numpy as np
 import cv2
-from config import intrinsic_path, R_path, T_path
+from config import INTRINSIC_PATH, R_PATH, T_PATH
 
 window_name = "Frame"
-camera_intrinsic = np.mat(np.loadtxt(intrinsic_path))
-r = np.loadtxt(R_path)
-t = np.asmatrix(np.loadtxt(T_path)).T
+camera_intrinsic = np.mat(np.loadtxt(INTRINSIC_PATH))
+r = np.loadtxt(R_PATH)
+t = np.asmatrix(np.loadtxt(T_PATH)).T
 
 
 def __pixel_to_world(camera_intrinsics, r, t, img_points):

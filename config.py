@@ -1,13 +1,13 @@
-intrinsic_path = "camera_matrix.txt"
-R_path = "./rotM.txt"
-T_path = "./translation_vector.txt"
+INTRINSIC_PATH = "camera_matrix.txt"
+R_PATH = "./rotM.txt"
+T_PATH = "./translation_vector.txt"
 
-model_path = "models/yolov5s.onnx"
+MODEL_PATH = "models/yolov5s.onnx"
 
-server = ("127.0.0.1", 3333)
-send_coor_flag = False
+SERVER_ADDR = ("127.0.0.1", 3333)
+SEND_COOR_FLAG = False
 
-class_names = [
+CLASS_NAMES = [
     "person",
     "bicycle",
     "car",
@@ -90,7 +90,7 @@ class_names = [
     "toothbrush",
 ]
 
-colors = [
+COLORS = [
     (255, 255, 0),
     (0, 255, 0),
     (0, 255, 255),

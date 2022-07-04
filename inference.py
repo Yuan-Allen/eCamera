@@ -5,7 +5,7 @@ import json
 from openvino.runtime import Core, Layout, Type
 from openvino.preprocess import PrePostProcessor, ColorFormat
 from utils.augmentations import letterbox
-from config import model_path, server, send_coor_flag, class_names, colors
+from config import MODEL_PATH, SERVER_ADDR, SEND_COOR_FLAG, CLASS_NAMES, COLORS
 from coordinate import pixel_to_world
 
 window_name = "Frame"
@@ -88,7 +88,7 @@ def get_result(predictions):
 def show_box(frame, filtered_ids, filered_confidences, filtered_boxes):
     # Show box
     for (class_id, _, box) in zip(filtered_ids, filered_confidences, filtered_boxes):
-        color = colors[int(class_id) % len(colors)]
+        color = COLORS[int(class_id) % len(COLORS)]
         cv2.rectangle(frame, box, color, 2)
         cv2.rectangle(
             frame, (box[0], box[1] - 10), (box[0] + box[2], box[1]), color, -1
@@ -97,7 +97,7 @@ def show_box(frame, filtered_ids, filered_confidences, filtered_boxes):
         cv2.putText(
             frame,
             "{}: ({:.2f} {:.2f} {:.2f})".format(
-                class_names[class_id], world_coor[0], world_coor[1], world_coor[2]
+                CLASS_NAMES[class_id], world_coor[0], world_coor[1], world_coor[2]
             ),
             (box[0], box[1]),
             cv2.FONT_HERSHEY_SIMPLEX,
@@ -120,17 +120,20 @@ def send_coor(s, filtered_ids, filtered_boxes):
     datas = {"request type": 2, "id": 1, "type": "camera", "objects": []}
     for (class_id, box) in zip(filtered_ids, filtered_boxes):
         world_coor = pixel_to_world(box[0] + box[2] / 2, box[1] + box[3])
-        datas["objects"].append({class_names[class_id]: world_coor})
+        # Convert to unity world coor system: Y-up, left handed coordinates (We just swap y and z here)
+        datas["objects"].append(
+            {CLASS_NAMES[class_id]: (world_coor[0], world_coor[2], world_coor[1])}
+        )
     s.sendall((json.dumps(datas) + "\n").encode())
 
 
 if __name__ == "__main__":
-    net = get_net(model_path)
+    net = get_net(MODEL_PATH)
     cap = get_camera(window_name, 1280, 720)
 
-    if send_coor_flag:
+    if SEND_COOR_FLAG:
         s = socket.socket()
-        s.connect(server)
+        s.connect(SERVER_ADDR)
 
     while True:
         ret, frame = cap.read()
@@ -142,7 +145,7 @@ if __name__ == "__main__":
         predictions = net([input_tensor])[net.outputs[0]]
 
         filtered_ids, filered_confidences, filtered_boxes = get_result(predictions)
-        if send_coor_flag:
+        if SEND_COOR_FLAG:
             send_coor(s, filtered_ids, filtered_boxes)
 
         frame = show_box(frame, filtered_ids, filered_confidences, filtered_boxes)
@@ -154,5 +157,5 @@ if __name__ == "__main__":
             break
 
     cv2.destroyAllWindows()
-    if send_coor_flag:
+    if SEND_COOR_FLAG:
         s.close()
