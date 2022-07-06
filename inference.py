@@ -117,12 +117,15 @@ def get_camera(window_name, width, height):
 
 
 def send_coor(s, filtered_ids, filtered_boxes):
-    datas = {"request type": 2, "id": 1, "type": "camera", "objects": []}
+    datas = {"requestType": 2, "id": 1, "type": "camera", "data": []}
     for (class_id, box) in zip(filtered_ids, filtered_boxes):
         world_coor = pixel_to_world(box[0] + box[2] / 2, box[1] + box[3])
         # Convert to unity world coor system: Y-up, left handed coordinates (We just swap y and z here)
-        datas["objects"].append(
-            {CLASS_NAMES[class_id]: (world_coor[0], world_coor[2], world_coor[1])}
+        datas["data"].append(
+            {
+                "name": CLASS_NAMES[class_id],
+                "coor": (world_coor[0], world_coor[2], world_coor[1]),
+            }
         )
     s.sendall((json.dumps(datas) + "\n").encode())
 
