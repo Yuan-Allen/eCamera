@@ -4,8 +4,8 @@ T_PATH = "./translation_vector.txt"
 
 MODEL_PATH = "models/yolov5s.onnx"
 
-SERVER_ADDR = ("127.0.0.1", 3333)
-SEND_COOR_FLAG = False
+SERVER_ADDR = ("127.0.0.1", 10002)
+SEND_COOR_FLAG = True
 
 CLASS_NAMES = [
     "person",

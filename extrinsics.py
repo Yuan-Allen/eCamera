@@ -40,11 +40,14 @@ def get_object_points(cap):
 if __name__ == "__main__":
     cap = get_camera("Frame", 1280, 720)
     get_object_points(cap)
-    (_, rotation_vector, translation_vector) = cv2.solvePnP(
-        np.array(object_points), np.array(image_points), camera_matrix, dist_coeffs
-    )
-    rotM = cv2.Rodrigues(rotation_vector)[0]
-    np.savetxt(R_PATH, rotM)
-    np.savetxt(T_PATH, translation_vector)
-    print(rotM)
-    print(translation_vector)
+    if len(object_points) >= 4:
+        (_, rotation_vector, translation_vector) = cv2.solvePnP(
+            np.array(object_points), np.array(image_points), camera_matrix, dist_coeffs
+        )
+        rotM = cv2.Rodrigues(rotation_vector)[0]
+        np.savetxt(R_PATH, rotM)
+        np.savetxt(T_PATH, translation_vector)
+        print(rotM)
+        print(translation_vector)
+    else:
+        print("Number of points can't be less than 4.")
