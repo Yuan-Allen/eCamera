@@ -41,7 +41,7 @@ if __name__ == "__main__":
     cap = get_camera("Frame", 1280, 720)
     get_object_points(cap)
     if len(object_points) >= 4:
-        (_, rotation_vector, translation_vector) = cv2.solvePnP(
+        (_, rotation_vector, translation_vector, _) = cv2.solvePnPRansac(
             np.array(object_points), np.array(image_points), camera_matrix, dist_coeffs
         )
         rotM = cv2.Rodrigues(rotation_vector)[0]
