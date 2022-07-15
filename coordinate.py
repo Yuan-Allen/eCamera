@@ -1,4 +1,3 @@
-from unittest import result
 import numpy as np
 import cv2
 from config import INTRINSIC_PATH, R_PATH, T_PATH
