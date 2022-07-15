@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from config import INTRINSIC_PATH, R_PATH, T_PATH
+from config import INTRINSIC_PATH, R_PATH, T_PATH, CAMERA_INDEX
 
 window_name = "Frame"
 camera_intrinsic = np.mat(np.loadtxt(INTRINSIC_PATH))
@@ -38,7 +38,7 @@ def pixel_to_world(x, y):
 
 
 def get_camera(window_name, width, height):
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(CAMERA_INDEX)
     cap.set(3, width)
     cap.set(4, height)
     cv2.namedWindow(window_name)

@@ -5,7 +5,14 @@ import json
 from openvino.runtime import Core, Layout, Type
 from openvino.preprocess import PrePostProcessor, ColorFormat
 from utils.augmentations import letterbox
-from config import MODEL_PATH, SERVER_ADDR, SEND_COOR_FLAG, CLASS_NAMES, COLORS
+from config import (
+    MODEL_PATH,
+    SERVER_ADDR,
+    SEND_COOR_FLAG,
+    CLASS_NAMES,
+    COLORS,
+    CAMERA_INDEX,
+)
 from coordinate import pixel_to_world
 
 window_name = "Frame"
@@ -71,7 +78,7 @@ def get_result(predictions):
                 box = np.array([left, top, width, height])
                 boxes.append(box)
 
-    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.25, 0.45)
+    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.45)
 
     filtered_ids = []
     filered_confidences = []
@@ -109,7 +116,7 @@ def show_box(frame, filtered_ids, filered_confidences, filtered_boxes):
 
 
 def get_camera(window_name, width, height):
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(CAMERA_INDEX)
     cap.set(3, width)
     cap.set(4, height)
     cv2.namedWindow(window_name)

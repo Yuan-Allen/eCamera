@@ -7,6 +7,8 @@ MODEL_PATH = "models/yolov5s.onnx"
 SERVER_ADDR = ("127.0.0.1", 10002)
 SEND_COOR_FLAG = True
 
+CAMERA_INDEX = 1
+
 CLASS_NAMES = [
     "person",
     "bicycle",

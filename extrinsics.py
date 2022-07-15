@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from config import INTRINSIC_PATH, R_PATH, T_PATH
+from config import INTRINSIC_PATH, R_PATH, T_PATH, CAMERA_INDEX
 
 object_points = []
 image_points = []
@@ -9,7 +9,7 @@ dist_coeffs = np.zeros((4, 1))
 
 
 def get_camera(window_name, width, height):
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(CAMERA_INDEX)
     cap.set(3, width)
     cap.set(4, height)
     cv2.namedWindow(window_name)
