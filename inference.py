@@ -86,10 +86,7 @@ def get_result(predictions):
     filtered_ids = []
     filered_confidences = []
     filtered_boxes = []
-    print(indexes)
     for i in indexes:
-        print(i)
-        print(i[0])
         filtered_ids.append(class_ids[i[0]])
         filered_confidences.append(confidences[i[0]])
         filtered_boxes.append(boxes[i[0]])
