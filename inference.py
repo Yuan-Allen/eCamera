@@ -66,7 +66,7 @@ def get_result(predictions):
             scores = det[5:]
             class_id = np.argmax(scores)
             if scores[class_id] > 0.25:
-                confidences.append(confidence)
+                confidences.append(float(confidence))
                 class_ids.append(class_id)
                 x, y, w, h = (
                     det[0].item(),
@@ -78,7 +78,7 @@ def get_result(predictions):
                 top = int((y - 0.5 * h - dh) / ratio[1])
                 width = int(w / ratio[0])
                 height = int(h / ratio[1])
-                box = np.array([left, top, width, height])
+                box = np.array([(left), top, width, height])
                 boxes.append(box)
 
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.45)
@@ -86,11 +86,13 @@ def get_result(predictions):
     filtered_ids = []
     filered_confidences = []
     filtered_boxes = []
-
+    print(indexes)
     for i in indexes:
-        filtered_ids.append(class_ids[i])
-        filered_confidences.append(confidences[i])
-        filtered_boxes.append(boxes[i])
+        print(i)
+        print(i[0])
+        filtered_ids.append(class_ids[i[0]])
+        filered_confidences.append(confidences[i[0]])
+        filtered_boxes.append(boxes[i[0]])
 
     return filtered_ids, filered_confidences, filtered_boxes
 
@@ -206,7 +208,6 @@ if __name__ == "__main__":
 
     while True:
         ret, frame = cap.read()
-        frame = cv2.imread("./images/10.jpg")
         letterbox_img, ratio, (dw, dh) = letterbox(frame, auto=False)
         # Change shape from HWC to NHWC
         input_tensor = np.expand_dims(letterbox_img, axis=0)
