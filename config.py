@@ -7,7 +7,7 @@ MODEL_PATH = "models/yolov5s.onnx"
 SERVER_ADDR = ("127.0.0.1", 10002)
 SEND_COOR_FLAG = True
 
-CAMERA_INDEX = 1
+CAMERA_INDEX = 0
 
 CLASS_NAMES = [
     "person",
@@ -102,4 +102,20 @@ COLORS = [
     (120, 156, 67),
     (62, 179, 128),
     (214, 109, 169),
+]
+
+FORMULA_NAMES = [
+    "NaCl",
+    "HNO3",
+    "K2S",
+    "NaOH",
+    "Na2S",
+    "KCl",
+    "CaCl2",
+    "BaCl2",
+    "H2SO4",
+    "MgCl2",
+    "KOH",
+    "He",
+    "Ne"
 ]
