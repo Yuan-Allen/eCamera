@@ -4,10 +4,13 @@ T_PATH = "./translation_vector.txt"
 
 MODEL_PATH = "models/yolov5s.onnx"
 
-SERVER_ADDR = ("192.168.1.156", 10002)
-SEND_COOR_FLAG = True
+SERVER_ADDR = ("127.0.0.1", 10002)
+SEND_COOR_FLAG = False
+SEND_COOR_WITH_OCR_FLAG = False
 
-CAMERA_INDEX = 0
+ENABLE_OCR = False
+
+CAMERA_INDEX = 1
 
 CLASS_NAMES = [
     "person",
@@ -122,5 +125,5 @@ FORMULA_NAMES = [
     "MgCl2",
     "KOH",
     "He",
-    "Ne"
+    "Ne",
 ]

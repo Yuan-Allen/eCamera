@@ -3,10 +3,14 @@ import numpy as np
 import socket
 import json
 import easyocr
+import threading
+import sys
+import copy
 from openvino.runtime import Core, Layout, Type
 from openvino.preprocess import PrePostProcessor, ColorFormat
 from utils.augmentations import letterbox
 from config import (
+    ENABLE_OCR,
     MODEL_PATH,
     SERVER_ADDR,
     SEND_COOR_FLAG,
@@ -15,11 +19,16 @@ from config import (
     CAMERA_INDEX,
     FORMULA_NAMES,
     WHITE_LIST,
+    SEND_COOR_WITH_OCR_FLAG,
 )
 import torch
 from coordinate import pixel_to_world
 
 window_name = "Frame"
+
+shared_struct = {}
+mutex = threading.Lock()
+event = threading.Event()
 
 
 def get_net(model_path):
@@ -98,12 +107,7 @@ def get_result(predictions):
 def show_box(frame, filtered_ids, filered_confidences, filtered_boxes):
     # Show box
     for (class_id, _, box) in zip(filtered_ids, filered_confidences, filtered_boxes):
-        flag = False
-        for name in WHITE_LIST:
-            if name == CLASS_NAMES[class_id]:
-                flag = True
-                break
-        if flag == False:
+        if CLASS_NAMES[class_id] not in WHITE_LIST:
             continue
         color = COLORS[int(class_id) % len(COLORS)]
         cv2.rectangle(frame, box, color, 2)
@@ -191,25 +195,83 @@ def edit_distance(s1, s2):
 
 
 def select_formula(s):
-    min_distance = 100
+    min_distance = 3
     result = ""
     for formula in FORMULA_NAMES:
         distance = edit_distance(s, formula)
-        if edit_distance(s, formula) < min_distance:
+        if distance <= min_distance:
             min_distance = distance
             result = formula
 
     return result
 
 
+def start_ocr():
+    while True:
+        event.wait()
+        mutex.acquire()
+        frame, ids, boxes = (
+            shared_struct["frame"],
+            shared_struct["ids"],
+            shared_struct["boxes"],
+        )
+        mutex.release()
+
+        print("ocr_result:   ",)
+        ocr_result = reader.readtext(
+            frame,
+            allowlist="0123456789QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm",
+        )  # Using OCR to parse the images
+        print(ocr_result)
+        ocr_match = []
+        for result in ocr_result:
+            left = result[0][0][0]
+            top = result[0][0][1]
+            right = result[0][2][0]
+            bottom = result[0][2][1]
+            cv2.rectangle(
+                frame,
+                (int(result[0][0][0]), int(result[0][0][1])),
+                (int(result[0][2][0]), int(result[0][2][1])),
+                (0, 0, 255),
+                2,
+            )
+            for index, (class_id, box) in enumerate(zip(ids, boxes)):
+                if class_id != 56:
+                    continue
+                if (
+                    left >= box[0]
+                    and top >= box[1]
+                    and right <= box[0] + box[2]
+                    and bottom <= box[1] + box[3]
+                ):
+                    formula = select_formula(result[1])
+                    if len(formula) == 0:
+                        continue
+                    ocr_match.append([formula, index])
+        print("ocr_match: {}", ocr_match)
+        cv2.imwrite("{}_ocr.jpg".format(window_name), frame)
+        if SEND_COOR_WITH_OCR_FLAG:
+            send_coor_with_ocr(s, ids, boxes, ocr_match)
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+
+
 if __name__ == "__main__":
     net = get_net(MODEL_PATH)
     cap = get_camera(window_name, 1280, 720)
-    reader = easyocr.Reader(['en'])  # this needs to run only once to load the model into memory
+    reader = easyocr.Reader(
+        ["en"]
+    )  # this needs to run only once to load the model into memory
 
-    if SEND_COOR_FLAG:
+    if SEND_COOR_FLAG or SEND_COOR_WITH_OCR_FLAG:
         s = socket.socket()
         s.connect(SERVER_ADDR)
+
+    if ENABLE_OCR:
+        t = threading.Thread(target=start_ocr, daemon=True)
+        t.start()
 
     while True:
         ret, frame = cap.read()
@@ -219,48 +281,22 @@ if __name__ == "__main__":
 
         predictions = net([input_tensor])[net.outputs[0]]
 
-        filtered_ids, filered_confidences, filtered_boxes = get_result(predictions)
-
-        print("ocr_result:   ", )
-        ocr_result = reader.readtext(frame, allowlist='0123456789QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm')  # Using OCR to parse the images
-        print(ocr_result)
-        ocr_match = []
-        for result in ocr_result:
-            # x = result[0][0][0]
-            # y = result[0][0][1]
-            # w = result[0][2][0] - result[0][0][0]
-            # h = result[0][2][1] - result[0][0][1]
-            # left = int((x - 0.5 * w - dw) / ratio[0])
-            # top = int((y - 0.5 * h - dh) / ratio[1])
-            # width = int(w / ratio[0])
-            # height = int(h / ratio[1])
-            left = result[0][0][0]
-            top = result[0][0][1]
-            width = result[0][2][0] - result[0][0][0]
-            height = result[0][2][1] - result[0][0][1]
-            cv2.rectangle(
-                frame, (int(result[0][0][0]), int(result[0][0][1])), (int(result[0][2][0]),
-                                                                      int(result[0][2][1])), (0, 0, 255), 2
-            )
-            index = 0
-            for (class_id, box) in zip(filtered_ids, filtered_boxes):
-                index += 1
-                if class_id != 56:
-                    continue
-                if left >= box[0] and top >= box[1] and left + width <= box[0] + box[2] and top + height <= box[1] + \
-                        box[3]:
-                    tmp = [select_formula(result[1]), index - 1]
-                    ocr_match.append(tmp)
-        print("ocr_match:")
-        print(ocr_match)
+        filtered_ids, filtered_confidences, filtered_boxes = get_result(predictions)
 
         if SEND_COOR_FLAG:
-            # send_coor(s, filtered_ids, filtered_boxes)
-            send_coor_with_ocr(s, filtered_ids, filtered_boxes, ocr_match)
+            send_coor(s, filtered_ids, filtered_boxes)
 
-        frame = show_box(frame, filtered_ids, filered_confidences, filtered_boxes)
+        mutex.acquire()
+        shared_struct["frame"] = copy.deepcopy(frame)
+        shared_struct["ids"] = copy.deepcopy(filtered_ids)
+        shared_struct["confidences"] = copy.deepcopy(filtered_confidences)
+        shared_struct["boxes"] = copy.deepcopy(filtered_boxes)
+        mutex.release()
 
-        cv2.imwrite("window_name.jpg", frame)
+        frame = show_box(frame, filtered_ids, filtered_confidences, filtered_boxes)
+
+        event.set()
+
         cv2.imshow(window_name, frame)
         key = cv2.waitKey(1)
         if key == 27:
@@ -268,5 +304,7 @@ if __name__ == "__main__":
             break
 
     cv2.destroyAllWindows()
-    if SEND_COOR_FLAG:
+    if SEND_COOR_FLAG or SEND_COOR_WITH_OCR_FLAG:
         s.close()
+    torch.cuda.empty_cache()
+    sys.exit()
