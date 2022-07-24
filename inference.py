@@ -154,7 +154,7 @@ def send_coor(s, filtered_ids, filtered_boxes):
 def send_coor_with_ocr(s, filtered_ids, filtered_boxes, ocr_match):
     datas = {"requestType": 3, "id": 1, "type": "camera", "data": []}
     index = 0
-    print("len(ocr_match)  ", len(ocr_match))
+    print("len(ocr_match): {}".format(len(ocr_match)))
     for (class_id, box) in zip(filtered_ids, filtered_boxes):
         text = ""
         for i in range(0, len(ocr_match)):
@@ -181,7 +181,6 @@ def edit_distance(s1, s2):
     dp = [[0 for _ in range(m + 1)] for _ in range(n + 1)]
     for i in range(n, -1, -1):
         for j in range(m, -1, -1):
-            # print(dp)
             if i == n:
                 dp[i][j] = m - j
             elif j == m:
@@ -249,7 +248,7 @@ def start_ocr():
                     if len(formula) == 0:
                         continue
                     ocr_match.append([formula, index])
-        print("ocr_match: {}", ocr_match)
+        print("ocr_match: {}".format(ocr_match))
         cv2.imwrite("{}_ocr.jpg".format(window_name), frame)
         if SEND_COOR_WITH_OCR_FLAG:
             send_coor_with_ocr(s, ids, boxes, ocr_match)
