@@ -14,6 +14,7 @@ from config import (
     COLORS,
     CAMERA_INDEX,
     FORMULA_NAMES,
+    WHITE_LIST,
 )
 import torch
 from coordinate import pixel_to_world
@@ -97,6 +98,13 @@ def get_result(predictions):
 def show_box(frame, filtered_ids, filered_confidences, filtered_boxes):
     # Show box
     for (class_id, _, box) in zip(filtered_ids, filered_confidences, filtered_boxes):
+        flag = False
+        for name in WHITE_LIST:
+            if name == CLASS_NAMES[class_id]:
+                flag = True
+                break
+        if flag == False:
+            continue
         color = COLORS[int(class_id) % len(COLORS)]
         cv2.rectangle(frame, box, color, 2)
         cv2.rectangle(
@@ -232,7 +240,7 @@ if __name__ == "__main__":
             height = result[0][2][1] - result[0][0][1]
             cv2.rectangle(
                 frame, (int(result[0][0][0]), int(result[0][0][1])), (int(result[0][2][0]),
-                                                                      int(result[0][2][1])), (0, 0, 255), -1
+                                                                      int(result[0][2][1])), (0, 0, 255), 2
             )
             index = 0
             for (class_id, box) in zip(filtered_ids, filtered_boxes):
@@ -253,6 +261,7 @@ if __name__ == "__main__":
         frame = show_box(frame, filtered_ids, filered_confidences, filtered_boxes)
 
         cv2.imwrite("window_name.jpg", frame)
+        cv2.imshow(window_name, frame)
         key = cv2.waitKey(1)
         if key == 27:
             cap.release()

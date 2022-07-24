@@ -4,10 +4,10 @@ T_PATH = "./translation_vector.txt"
 
 MODEL_PATH = "models/yolov5s.onnx"
 
-SERVER_ADDR = ("127.0.0.1", 10002)
-SEND_COOR_FLAG = False
+SERVER_ADDR = ("192.168.1.156", 10002)
+SEND_COOR_FLAG = True
 
-CAMERA_INDEX = 1
+CAMERA_INDEX = 0
 
 CLASS_NAMES = [
     "person",
@@ -90,6 +90,11 @@ CLASS_NAMES = [
     "teddy bear",
     "hair drier",
     "toothbrush",
+]
+
+WHITE_LIST = [
+    "person",
+    "chair",
 ]
 
 COLORS = [
