@@ -164,9 +164,8 @@ def send_coor(s, filtered_ids, filtered_boxes):
 
 def send_coor_with_ocr(s, filtered_ids, filtered_boxes, ocr_match):
     datas = {"requestType": 3, "id": 1, "type": "camera", "data": []}
-    index = 0
     print("len(ocr_match): {}".format(len(ocr_match)))
-    for (class_id, box) in zip(filtered_ids, filtered_boxes):
+    for index, (class_id, box) in enumerate(zip(filtered_ids, filtered_boxes)):
         if CLASS_NAMES[class_id] not in OCR_LIST:
             continue
         text = ""
@@ -183,7 +182,7 @@ def send_coor_with_ocr(s, filtered_ids, filtered_boxes, ocr_match):
                 "text": text,
             }
         )
-        index += 1
+
     mutex.acquire()
     s.sendall((json.dumps(datas) + "\n").encode())
     mutex.release()
