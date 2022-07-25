@@ -20,6 +20,7 @@ from config import (
     FORMULA_NAMES,
     WHITE_LIST,
     SEND_COOR_WITH_OCR_FLAG,
+    OCR_LIST,
 )
 import torch
 from coordinate import pixel_to_world
@@ -91,7 +92,7 @@ def get_result(predictions):
                 box = np.array([(left), top, width, height])
                 boxes.append(box)
 
-    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.45)
+    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.7, 0.45)
 
     filtered_ids = []
     filered_confidences = []
@@ -106,7 +107,9 @@ def get_result(predictions):
 
 def show_box(frame, filtered_ids, filered_confidences, filtered_boxes):
     # Show box
-    for (class_id, _, box) in zip(filtered_ids, filered_confidences, filtered_boxes):
+    for (class_id, confidences, box) in zip(
+        filtered_ids, filered_confidences, filtered_boxes
+    ):
         if CLASS_NAMES[class_id] not in WHITE_LIST:
             continue
         color = COLORS[int(class_id) % len(COLORS)]
@@ -117,8 +120,12 @@ def show_box(frame, filtered_ids, filered_confidences, filtered_boxes):
         world_coor = pixel_to_world(box[0] + box[2] / 2, box[1] + box[3])
         cv2.putText(
             frame,
-            "{}: ({:.2f} {:.2f} {:.2f})".format(
-                CLASS_NAMES[class_id], world_coor[0], world_coor[1], world_coor[2]
+            "{}: ({:.2f} {:.2f} {:.2f} {:.2f})".format(
+                CLASS_NAMES[class_id],
+                world_coor[0],
+                world_coor[1],
+                world_coor[2],
+                confidences,
             ),
             (box[0], box[1]),
             cv2.FONT_HERSHEY_SIMPLEX,
@@ -140,6 +147,8 @@ def get_camera(window_name, width, height):
 def send_coor(s, filtered_ids, filtered_boxes):
     datas = {"requestType": 2, "id": 1, "type": "camera", "data": []}
     for (class_id, box) in zip(filtered_ids, filtered_boxes):
+        if CLASS_NAMES[class_id] in OCR_LIST:
+            continue
         world_coor = pixel_to_world(box[0] + box[2] / 2, box[1] + box[3])
         # Convert to unity world coor system: Y-up, left handed coordinates (We just swap y and z here)
         datas["data"].append(
@@ -148,7 +157,9 @@ def send_coor(s, filtered_ids, filtered_boxes):
                 "coor": (world_coor[0], world_coor[2], world_coor[1]),
             }
         )
+    mutex.acquire()
     s.sendall((json.dumps(datas) + "\n").encode())
+    mutex.release()
 
 
 def send_coor_with_ocr(s, filtered_ids, filtered_boxes, ocr_match):
@@ -156,6 +167,8 @@ def send_coor_with_ocr(s, filtered_ids, filtered_boxes, ocr_match):
     index = 0
     print("len(ocr_match): {}".format(len(ocr_match)))
     for (class_id, box) in zip(filtered_ids, filtered_boxes):
+        if CLASS_NAMES[class_id] not in OCR_LIST:
+            continue
         text = ""
         for i in range(0, len(ocr_match)):
             if ocr_match[i][1] == index:
@@ -171,7 +184,9 @@ def send_coor_with_ocr(s, filtered_ids, filtered_boxes, ocr_match):
             }
         )
         index += 1
+    mutex.acquire()
     s.sendall((json.dumps(datas) + "\n").encode())
+    mutex.release()
 
 
 def edit_distance(s1, s2):

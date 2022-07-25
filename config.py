@@ -98,6 +98,12 @@ CLASS_NAMES = [
 WHITE_LIST = [
     "person",
     "chair",
+    "umbrella",
+]
+
+# items with ocr
+OCR_LIST = [
+    "chair",
 ]
 
 COLORS = [
